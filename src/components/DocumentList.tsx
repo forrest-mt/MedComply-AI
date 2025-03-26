@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -14,16 +13,6 @@ import SourceDocumentUpload from "./SourceDocumentUpload";
 const DocumentList = () => {
   const { documents, currentDocument, setCurrentDocument, deleteDocument } = useDocuments();
   const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
-
-  // Group documents by type
-  const groupedDocuments = documents.reduce((groups, doc) => {
-    const type = doc.type;
-    if (!groups[type]) {
-      groups[type] = [];
-    }
-    groups[type].push(doc);
-    return groups;
-  }, {} as Record<string, MedicalDocument[]>);
 
   // Sample source documents for the demo
   const sourceDocuments = [
@@ -75,22 +64,17 @@ const DocumentList = () => {
             
             <Separator className="my-4" />
             
-            {Object.entries(groupedDocuments).map(([type, docs]) => (
-              <div key={type} className="mb-6">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2 px-2">{type}</h3>
-                <div className="space-y-1">
-                  {docs.map((doc) => (
-                    <DocumentItem 
-                      key={doc.id}
-                      document={doc}
-                      isActive={currentDocument?.id === doc.id}
-                      onSelect={() => setCurrentDocument(doc)}
-                      onDelete={() => setDocumentToDelete(doc.id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
+            <div className="space-y-1">
+              {documents.map((doc) => (
+                <DocumentItem 
+                  key={doc.id}
+                  document={doc}
+                  isActive={currentDocument?.id === doc.id}
+                  onSelect={() => setCurrentDocument(doc)}
+                  onDelete={() => setDocumentToDelete(doc.id)}
+                />
+              ))}
+            </div>
           </div>
         </TabsContent>
         

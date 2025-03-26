@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -34,7 +33,7 @@ const Header = ({ isNavOpen, setIsNavOpen }: HeaderProps) => {
         </Button>
         
         <div className="flex flex-col">
-          <h1 className="text-lg font-semibold tracking-tight">MediDoc Genie</h1>
+          <h1 className="text-lg font-semibold tracking-tight">MedComply AI</h1>
           <p className="text-xs text-muted-foreground">Medical Device Compliance Documentation</p>
         </div>
       </div>
