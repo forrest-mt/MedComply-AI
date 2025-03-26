@@ -1,0 +1,173 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 45% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+
+    --radius: 0.5rem;
+
+    --editor-background: 0 0% 100%;
+    --editor-foreground: 222 47% 11%;
+    --editor-border: 214 32% 91%;
+    --editor-panel: 210 20% 98%;
+
+    --ai-chat-background: 223 100% 98%;
+    --ai-chat-foreground: 222 47% 11%;
+    --ai-chat-accent: 221 83% 53%;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 224 76% 48%;
+    
+    --editor-background: 222 47% 11%;
+    --editor-foreground: 210 40% 98%;
+    --editor-border: 217 33% 17%;
+    --editor-panel: 223 47% 11%;
+
+    --ai-chat-background: 222 47% 11%;
+    --ai-chat-foreground: 210 40% 98%;
+    --ai-chat-accent: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Document editor styles */
+.document-editor {
+  @apply prose max-w-none;
+}
+
+.document-editor h1 {
+  @apply text-3xl font-bold mb-4 mt-0;
+}
+
+.document-editor h2 {
+  @apply text-2xl font-semibold mb-3 mt-6;
+}
+
+.document-editor h3 {
+  @apply text-xl font-medium mb-2 mt-5;
+}
+
+.document-editor p {
+  @apply mb-4 leading-relaxed;
+}
+
+.document-editor ul {
+  @apply list-disc pl-5 mb-4;
+}
+
+.document-editor ol {
+  @apply list-decimal pl-5 mb-4;
+}
+
+.document-editor li {
+  @apply mb-1;
+}
+
+/* Glass effect */
+.glass-panel {
+  @apply bg-white bg-opacity-80 backdrop-blur-md border border-white border-opacity-20 shadow-sm;
+}
+
+.glass-panel-dark {
+  @apply bg-gray-900 bg-opacity-80 backdrop-blur-md border border-gray-800 border-opacity-20 shadow-sm;
+}
+
+/* Animation utilities */
+.animate-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.animate-out {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
