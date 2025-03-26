@@ -1,15 +1,23 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useDocuments } from "@/context/DocumentContext";
-import { Message } from "@/lib/types";
-import { SendHorizontal, Bot, Sparkles, BookOpen, Lightbulb, Pencil } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { GeminiService } from "@/lib/gemini-service";
+import { Message, AIEditResponse } from "@/lib/types";
+import { SendHorizontal, Bot, Pencil, Check, X } from "lucide-react";
+import { useDocuments } from "@/context/DocumentContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const geminiService = new GeminiService();
 
@@ -63,6 +71,8 @@ const AIChat = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [editSuggestion, setEditSuggestion] = useState<AIEditResponse | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { currentDocument, updateDocument } = useDocuments();
 
@@ -87,39 +97,72 @@ const AIChat = () => {
     setIsLoading(true);
     
     try {
-      let prompt = input;
-      if (currentDocument?.content) {
-        prompt = `Context: ${currentDocument.content}\n\nUser request: ${input}`;
-      }
-      
-      const responseText = await geminiService.generateContent(prompt);
-      
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: responseText,
-        role: "assistant",
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, aiResponse]);
-      
-      // Check if the response suggests document edits
-      if (responseText.toLowerCase().includes("updated document") && currentDocument) {
-        const editPrompt = `Given this document:\n${currentDocument.content}\n\nMake the following changes:\n${input}\n\nProvide ONLY the complete updated document content:`;
-        const editedContent = await geminiService.generateContent(editPrompt);
-        
-        updateDocument({
-          ...currentDocument,
-          content: editedContent
+      if (currentDocument) {
+        const response = await geminiService.generateEditResponse({
+          documentContent: currentDocument.content,
+          userRequest: input,
+          documentType: currentDocument.type
         });
+
+        // Always show the AI's message about the changes
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: response.type === 'edit' 
+            ? `I've analyzed your request and prepared some changes to the document. ${response.message}`
+            : response.message,
+          role: "assistant",
+          timestamp: new Date()
+        };
         
-        toast.success("Document updated by AI assistant");
+        setMessages(prev => [...prev, aiMessage]);
+
+        // If it's an edit response, show the edit dialog
+        if (response.type === 'edit' && response.editContent) {
+          setEditSuggestion(response);
+          setShowEditDialog(true);
+        }
+      } else {
+        // If no document is open, just use regular chat
+        const response = await geminiService.generateContent(input);
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: response,
+          role: "assistant",
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiMessage]);
       }
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to get AI response");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleApplyEdit = () => {
+    if (!currentDocument || !editSuggestion?.editContent) return;
+    
+    updateDocument({
+      ...currentDocument,
+      content: editSuggestion.editContent.content
+    });
+    
+    toast.success("Document updated successfully");
+    setShowEditDialog(false);
+    setEditSuggestion(null);
+  };
+
+  const handleRejectEdit = () => {
+    setShowEditDialog(false);
+    setEditSuggestion(null);
+    toast("Edit suggestion dismissed");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -130,13 +173,6 @@ const AIChat = () => {
     }
     
     setInput(input => input + " (Please edit the document with this suggestion)");
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
   };
 
   const handlePromptClick = (promptText: string) => {
@@ -150,16 +186,6 @@ const AIChat = () => {
           <Bot className="h-5 w-5 text-primary" />
           <h2 className="font-medium">AI Assistant</h2>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-1 h-8"
-          onClick={handleEditDocument}
-          disabled={!currentDocument}
-        >
-          <Pencil className="h-3.5 w-3.5" />
-          <span className="text-xs">Edit Document</span>
-        </Button>
       </div>
 
       <ScrollArea className="flex-1 p-4">
@@ -192,6 +218,46 @@ const AIChat = () => {
           </Button>
         </div>
       </div>
+
+      <AlertDialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Review Document Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              The AI suggests the following changes to your document:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="my-4 space-y-4">
+            <div className="space-y-2">
+              <h4 className="font-medium">Changes to be made:</h4>
+              <ul className="list-disc pl-4 space-y-1">
+                {editSuggestion?.editContent?.changes.map((change, index) => (
+                  <li key={index} className="text-sm text-muted-foreground">
+                    {change}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="space-y-2">
+              <h4 className="font-medium">Preview:</h4>
+              <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+                <pre className="text-sm whitespace-pre-wrap">
+                  {editSuggestion?.editContent?.content}
+                </pre>
+              </ScrollArea>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleRejectEdit}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApplyEdit}>
+              Apply Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

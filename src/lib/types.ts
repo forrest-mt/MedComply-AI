@@ -1,4 +1,3 @@
-
 export interface MedicalDocument {
   id: string;
   title: string;
@@ -50,4 +49,19 @@ export interface DocumentDecision {
   description: string;
   createdAt: Date;
   category: "Design" | "Regulatory" | "Clinical" | "QMS" | "Technical" | "Other";
+}
+
+export interface AIEditResponse {
+  type: 'chat' | 'edit';
+  message: string;
+  editContent?: {
+    content: string;
+    changes: string[];
+  };
+}
+
+export interface AIEditRequest {
+  documentContent: string;
+  userRequest: string;
+  documentType?: DocumentType;
 }
